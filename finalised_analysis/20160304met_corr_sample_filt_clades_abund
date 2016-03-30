@@ -1,0 +1,539 @@
+# Dimensionality reduction of Metaphlan abundance data at each taxonomic level 
+# 1. Clades present in a minimum proportion of samples at each anatomical site (T, UB, LB)
+# 2. Clades present in a minimum  proportion of samples within lesional / non-lesional skin of each clinical group (AD, PSO, CTRL)
+# 3. Subset the microbes to be retained from unfiltered matrix
+# 4. Save reduced abundance matrix (met_corr_sample_filt_clades_abund)
+# 5. Explore excluded clades
+
+rm(list=ls())
+
+#load the corr filtered abundance data
+load ("/Users/helenalexander/Documents/MAARS/data/metaphlan/analysis/data-filtering/20160304met_corr_filt_clades.Rdata")
+# load metadata 
+load ("/Users/helenalexander/Documents/MAARS/data/metaphlan/analysis/metadata/20160301clin_seq_pt_metadata.Rdata")
+#load the unfiltered abundance data
+load ("/Users/helenalexander/Documents/MAARS/data/metaphlan/analysis/data-filtering/20160304met__unfilt_clades.Rdata")
+
+
+# 1. Clades present in a minimum proportion of samples at each anatomical site (T, UB, LB)
+
+# THIGH
+#Identify which samples are thigh samples
+wT = grep("T", clin_seq_pt_metadata[,"anatomical_location_label"])
+ThighSamples = clin_seq_pt_metadata[wT,"scilifeID"]
+CT = as.character(ThighSamples)
+length (CT)
+
+dim(met_corr_filt_clades)
+t_met_corr_filt_clades = t(met_corr_filt_clades)
+dim(t_met_corr_filt_clades)
+# Subset these thigh samples from t_met_corr_filt_clades abundances DF
+# (Samples not in Species but in megadata ("P1896_1049" "P1896_1051") excluded from this analysis)
+t_met_corr_filt_clades_thigh = t_met_corr_filt_clades [,c("P1411_1001", "P1411_1007", "P1411_1011", "P1411_1012", "P1411_1013", "P1411_1017", "P1411_1018", "P1411_1019", "P1411_1023", "P1411_1025", "P1411_1029", "P1411_1030", "P1411_1031",
+                       "P1411_1035", "P1411_1038", "P1411_1042", "P1411_1043", "P1411_1044", "P1411_1048", "P1411_1050", "P1411_1054", "P1411_1055", "P1411_1056", "P1411_1060", "P1411_1063", "P1411_1064",
+                       "P1411_1069", "P1411_1073", "P1411_1074", "P1411_1075", "P1411_1079", "P1411_1080", "P1411_1081", "P1411_1085", "P1411_1088", "P1411_1089", "P1411_1092", "P1411_1093", "P1411_1098",
+                       "P1411_1100", "P1411_1101", "P1411_1106", "P1709_1007", "P1709_1011", "P1709_1012", "P1709_1056", "P1709_1057", "P1709_1060", "P1709_1061", "P1709_1066", "P1709_1067", "P1709_1070",
+                       "P1709_1071", "P1709_1073", "P1709_1074", "P1709_1077", "P1709_1078", "P1709_1081", "P1709_1082", "P1709_1085", "P1709_1087", "P1709_1089", "P1709_1091", "P1709_1093", "P1709_1095",
+                       "P1709_1097", "P1709_1099", "P1709_1101", "P1761_1001", "P1761_1007", "P1761_1011", "P1761_1017", "P1761_1018", "P1761_1023", "P1761_1024", "P1761_1025", "P1761_1031", "P1761_1035",
+                       "P1761_1038", "P1761_1042", "P1761_1043", "P1761_1044", "P1761_1045", "P1761_1048", "P1761_1049", "P1761_1050", "P1761_1056", "P1761_1060", "P1761_1069", "P1761_1073", "P1761_1074",
+                       "P1761_1075", "P1761_1079", "P1761_1080", "P1761_1084", "P1761_1091", "P1761_1092", "P1761_1093", "P1761_1094", "P1761_1097", "P1761_1105", "P1821_1017", "P1821_1039", "P1821_1040",
+                       "P1821_1047", "P1821_1049", "P1821_1066", "P1821_1067", "P1821_1068", "P1821_1069", "P1821_1074","P1821_1078", "P1821_1080", "P1821_1087", "P1821_1089", "P1821_1091", "P1821_1094", 
+                       "P1821_1095", "P1821_1096", "P1821_1097", "P1821_1101", "P1821_1102", "P1821_1103", "P1821_1107", "P1896_1030", "P1896_1031", "P1896_1034", "P1896_1035", "P1896_1040", "P1896_1041",
+                       "P1896_1043", "P1896_1044", "P1896_1045", "P1896_1046", "P1896_1048", "P1896_1054", "P1896_1056", "P1896_1058", "P1896_1059", "P1896_1062", 
+                       "P1896_1065", "P1896_1071", "P1896_1072", "P1896_1076", "P1896_1078", "P1896_1080", "P1896_1082", "P1896_1084", "P1896_1088", "P1896_1089", "P1896_1090", "P1896_1094", "P1896_1095",
+                       "P1896_1096", "P1896_1100", "P1896_1101", "P1896_1102", "P1900_1013", "P1900_1016", "P1900_1018", "P1900_1022", "P1900_1024", "P1900_1082", "P1900_1085", "P1900_1087", "P1900_1089",
+                       "P1900_1090", "P1900_1092", "P1900_1096", "P1900_1100", "P1900_1101", "P1900_1102", "P1900_1106", "P1900_1107", "P2029_1019", "P2029_1022", "P2029_1023", "P2029_1024", "P2029_1030",
+                       "P2029_1033", "P2029_1060", "P2029_1065", "P2029_1066", "P2029_1067", "P2029_1074", "P2029_1075", "P2029_1076", "P752_101",  "P752_105", "P752_106", "P752_107", "P752_111",  
+                       "P752_112",   "P752_113" )]
+dim(t_met_corr_filt_clades_thigh)
+t_met_corr_filt_clades_thigh[t_met_corr_filt_clades_thigh == 0] <- NA
+dim(t_met_corr_filt_clades_thigh)
+head(t_met_corr_filt_clades_thigh)
+# identify nonNAs (ie abundance of specific clades in specific sample is greater 0 = clade is present)
+vNAT = !is.na(t_met_corr_filt_clades_thigh)
+#calculate number of nonNAs in each row ie number of samples when clade is present
+nNAT = rowSums(vNAT)
+# identify how many clades are retained when we apply a threshold (th) of minimum number of samples in which clades must be present (minimum threshold of nNAT)
+keptListT=list()
+Number_thigh_samples_clade_present = seq(from=1, to= 184, length.out = 184)
+
+for(thT in Number_thigh_samples_clade_present){
+  wTh = which(nNAT>=thT)
+  # keep these clades
+  keepT = t_met_corr_filt_clades_thigh[wTh,]
+  # what are these kept clades
+  rownames(keepT)
+  #which clades have we kept
+  keptListT[[as.character(thT)]] = rownames(keepT)
+  keptList1T = lapply (keptListT, FUN = length)
+  Number_of_clades_kept_T = as.numeric(keptList1T)
+}
+
+# plot graph of threshold value against number of clades kept to identiy best threshold value to use
+plot(x=Number_thigh_samples_clade_present, y=Number_of_clades_kept_T)
+
+# clade has to be present in at least 5% of thigh samples = 10/197 thigh samples
+wTh10 = which(nNAT>=10)
+keepTh10 = t_met_corr_filt_clades_thigh[wTh10,]
+# what are these kept clades
+rownames (keepTh10)
+clades_Th5p = rownames (keepTh10)
+
+## UB
+#Identify which samples are UB samples
+wUB = grep("UB", clin_seq_pt_metadata[,"anatomical_location_label"])
+UBSamples = clin_seq_pt_metadata[wUB,"scilifeID"]
+CUB = as.character(UBSamples)
+
+# Subset these UB samples from Species abundances DF
+# Colnames not in Species but in megadata (UB) = "P1411_1104" "P1821_1058" "P1896_1024" excluded from this analysis
+t_met_corr_filt_clades_UB = t_met_corr_filt_clades [,c("P1411_1004", "P1411_1005", "P1411_1067", "P1411_1068","P1411_1072", "P1411_1091", "P1411_1094", "P1411_1095", "P1411_1105",
+                        "P1709_1005", "P1709_1006", "P1709_1030", "P1709_1044", "P1709_1045", "P1709_1052", "P1709_1053", "P1709_1054", "P1709_1055", "P1709_1062",
+                        "P1709_1063", "P1709_1064", "P1709_1065", "P1709_1068", "P1709_1069", "P1709_1075", "P1709_1076", "P1709_1083", "P1709_1084", "P1709_1104",
+                        "P1709_1105", "P1761_1005", "P1761_1006", "P1761_1022", "P1761_1029", "P1761_1030", "P1761_1054", "P1761_1055", "P1761_1063", "P1761_1064",
+                        "P1761_1067", "P1761_1068", "P1761_1077", "P1761_1078", "P1761_1103", "P1761_1104", "P1821_1002", "P1821_1026", "P1821_1035", "P1821_1036",
+                        "P1821_1037", "P1821_1038", "P1821_1041", "P1821_1042", "P1821_1045", "P1821_1046", "P1821_1050", "P1821_1051", "P1821_1052", "P1821_1053",
+                        "P1821_1054", "P1821_1055", "P1821_1056", "P1821_1057", "P1821_1059", "P1821_1060", "P1821_1061", "P1821_1062", "P1821_1063", "P1821_1064", 
+                        "P1821_1065", "P1821_1070", "P1821_1071", "P1821_1082", "P1821_1083", "P1821_1084", "P1821_1085", "P1821_1086", "P1896_1018", "P1896_1020", 
+                        "P1896_1021", "P1896_1023", "P1896_1025", "P1896_1026", "P1896_1027", "P1896_1028", "P1896_1029", "P1896_1033","P1896_1036", "P1896_1037", 
+                        "P1896_1038", "P1896_1039", "P1896_1087", "P1900_1001", "P1900_1003", "P1900_1004", "P1900_1005", "P1900_1006","P1900_1007", "P1900_1008", 
+                        "P1900_1009", "P1900_1011", "P1900_1012", "P1900_1069", "P1900_1075", "P1900_1095", "P1900_1104", "P1900_1105","P2029_1027", "P2029_1064", 
+                        "P2029_1070", "P2029_1071", "P752_117"  , "P752_118")]
+dim(t_met_corr_filt_clades_UB)
+t_met_corr_filt_clades_UB[t_met_corr_filt_clades_UB == 0] <- NA
+# identify nonNAs (ie abundance of specific species in specific sample is greater 0 = species is present)
+vNAUB = !is.na(t_met_corr_filt_clades_UB)
+#calculate number of nonNAs in each row ie number of samples when species is present
+nNAUB = rowSums(vNAUB)
+# identify how many species are retained when we apply a threshold (th) of minimum number of samples in which species must be present (minimum threshold of nNAT)
+keptListUB=list()
+Number_UB_samples_clade_present = seq(from=1, to= 108, length.out = 108)
+
+for(thUB in Number_UB_samples_clade_present){
+  wUB = which(nNAUB>=thUB)
+  # keep these species
+  keepUB = t_met_corr_filt_clades_UB[wUB,]
+  # what are these kept species
+  rownames(keepUB)
+  #which species have we kept
+  keptListUB[[as.character(thUB)]] = rownames(keepUB)
+  keptList1UB = lapply (keptListUB, FUN = length)
+  Number_of_clades_kept_UB = as.numeric(keptList1UB)
+}
+
+
+# plot graph of threshold value against number of species kept to identiy best threshold value to use
+plot(x=Number_UB_samples_clade_present, y=Number_of_clades_kept_UB)
+
+# species has to be present in at least 5% of UB samples = 6/116 UB samples
+wUB6 = which(nNAUB>=6)
+# keep these species
+keepUB6 = t_met_corr_filt_clades_UB[wUB6,]
+# what are these kept species
+rownames(keepUB6)
+clades_UB5p = rownames(keepUB6)
+
+#### LB
+#Identify which samples are LB samples
+wLB = grep("LB", clin_seq_pt_metadata[,"anatomical_location_label"])
+LBSamples = clin_seq_pt_metadata[wLB,"scilifeID"]
+CLB = as.character(LBSamples)
+
+# Subset these LB samples from Species abundances DF
+# Colnames not in Species but in clin_seq_pt_metadata (LB) = "P1821_1014" "P1821_1029" "P1896_1008" "P1896_1052" "P1900_1063" excluded from this analysis
+t_met_corr_filt_clades_LB = t_met_corr_filt_clades [,c("P1411_1002", "P1411_1003", "P1411_1006", "P1411_1008" ,"P1411_1009", "P1411_1010" ,"P1411_1014", "P1411_1020" ,"P1411_1021",
+                         "P1411_1022", "P1411_1024" ,"P1411_1026", "P1411_1027", "P1411_1028" ,"P1411_1032" ,"P1411_1033", "P1411_1034", "P1411_1036",
+                       "P1411_1039" ,"P1411_1040", "P1411_1041", "P1411_1045", "P1411_1046", "P1411_1047", "P1411_1049", "P1411_1051", "P1411_1052",
+                         "P1411_1053", "P1411_1057", "P1411_1058", "P1411_1059", "P1411_1061", "P1411_1065", "P1411_1066", "P1411_1070", "P1411_1071",
+                         "P1411_1076" ,"P1411_1077" ,"P1411_1078", "P1411_1082", "P1411_1083", "P1411_1084", "P1411_1087", "P1411_1090", "P1411_1099",
+                         "P1411_1102", "P1411_1103", "P1411_1107", "P1709_1003", "P1709_1004", "P1709_1008", "P1709_1009", "P1709_1010", "P1709_1015",
+                         "P1709_1016", "P1709_1017", "P1709_1018", "P1709_1019", "P1709_1020", "P1709_1021", "P1709_1022", "P1709_1023", "P1709_1024",
+                        "P1709_1025" ,"P1709_1026" ,"P1709_1027", "P1709_1028" ,"P1709_1029" ,"P1709_1031" ,"P1709_1032" ,"P1709_1038" ,"P1709_1039",
+                         "P1709_1046", "P1709_1047", "P1709_1048", "P1709_1049", "P1709_1050", "P1709_1051", "P1709_1058", "P1709_1059", "P1709_1086",
+                         "P1709_1088", "P1709_1090", "P1709_1092", "P1709_1094", "P1709_1096", "P1709_1098", "P1709_1100", "P1709_1102", "P1709_1103",
+                         "P1761_1002", "P1761_1008", "P1761_1009", "P1761_1010", "P1761_1021", "P1761_1026", "P1761_1027", "P1761_1028", "P1761_1032",
+                         "P1761_1036", "P1761_1039", "P1761_1040", "P1761_1041", "P1761_1046", "P1761_1047", "P1761_1051", "P1761_1052", "P1761_1053",
+                         "P1761_1057", "P1761_1058", "P1761_1059", "P1761_1061", "P1761_1065", "P1761_1066", "P1761_1070", "P1761_1071", "P1761_1072",
+                         "P1761_1076", "P1761_1081", "P1761_1086", "P1761_1089", "P1761_1090", "P1761_1095", "P1761_1096", "P1761_1098", "P1761_1101",
+                         "P1761_1102", "P1761_1106", "P1821_1001", "P1821_1003", "P1821_1004", "P1821_1005", "P1821_1006", "P1821_1007", "P1821_1008",
+                         "P1821_1010", "P1821_1011", "P1821_1015", "P1821_1016", "P1821_1018", "P1821_1019", "P1821_1020", "P1821_1022", "P1821_1023", 
+                         "P1821_1024", "P1821_1025", "P1821_1027", "P1821_1028", "P1821_1030", "P1821_1031", "P1821_1032", "P1821_1033", "P1821_1034", 
+                         "P1821_1073", "P1821_1075", "P1821_1079", "P1821_1081", "P1821_1088", "P1821_1090", "P1821_1092", "P1821_1093", "P1821_1098", 
+                         "P1821_1104", "P1821_1105", "P1821_1106", "P1896_1001", "P1896_1002", "P1896_1003", "P1896_1005", "P1896_1006", "P1896_1007", 
+                         "P1896_1010", "P1896_1011", "P1896_1012", "P1896_1013", "P1896_1014", "P1896_1016", "P1896_1032", "P1896_1042", "P1896_1053", 
+                         "P1896_1055", "P1896_1057", "P1896_1060", "P1896_1063", "P1896_1064", "P1896_1067", "P1896_1068", "P1896_1069", "P1896_1073", 
+                         "P1896_1074", "P1896_1077", "P1896_1079", "P1896_1081", "P1896_1085", "P1896_1086", "P1896_1091", "P1896_1092", "P1896_1093", 
+                         "P1896_1097", "P1896_1098", "P1896_1099", "P1896_1103", "P1896_1104", "P1896_1105", "P1900_1010", "P1900_1014", "P1900_1015", 
+                         "P1900_1017", "P1900_1019", "P1900_1020", "P1900_1021", "P1900_1025", "P1900_1026", "P1900_1027", "P1900_1028", "P1900_1029", 
+                         "P1900_1030", "P1900_1031", "P1900_1032", "P1900_1033", "P1900_1034", "P1900_1035", "P1900_1036", "P1900_1037", "P1900_1038", 
+                         "P1900_1039", "P1900_1040", "P1900_1041", "P1900_1042", "P1900_1044", "P1900_1046", "P1900_1048", "P1900_1049", "P1900_1050", 
+                         "P1900_1051", "P1900_1052", "P1900_1054", "P1900_1055", "P1900_1058", "P1900_1059","P1900_1060", "P1900_1062", "P1900_1065", 
+                         "P1900_1067", "P1900_1068", "P1900_1070", "P1900_1072", "P1900_1073", "P1900_1074", "P1900_1076", "P1900_1078", "P1900_1079",
+                         "P1900_1080", "P1900_1086", "P1900_1088", "P1900_1091", "P1900_1093", "P1900_1094", "P1900_1097", "P1900_1098", "P1900_1099", 
+                         "P1900_1103", "P2029_1018", "P2029_1020", "P2029_1021", "P2029_1025", "P2029_1026", "P2029_1029", "P2029_1031", "P2029_1032", 
+                         "P2029_1056", "P2029_1057", "P2029_1058", "P2029_1059", "P2029_1063", "P2029_1068", "P2029_1069", "P2029_1077", "P752_102" ,  
+                         "P752_103", "P752_104", "P752_108", "P752_109","P752_110", "P752_114", "P752_115", "P752_116")]
+dim(t_met_corr_filt_clades_LB)
+t_met_corr_filt_clades_LB[t_met_corr_filt_clades_LB == 0] <- NA
+# identify nonNAs (ie abundance of specific species in specific sample is greater 0 = species is present)
+vNALB = !is.na(t_met_corr_filt_clades_LB)
+#calculate number of nonNAs in each row ie number of samples when species is present
+nNALB = rowSums(vNALB)
+# identify how many species are retained when we apply a threshold (th) of minimum number of samples in which species must be present (minimum threshold of nNAT)
+keptListLB=list()
+Number_LB_samples_clade_present = seq(from=1, to= 281, length.out = 281)
+
+for(thLB in Number_LB_samples_clade_present){
+  wLB = which(nNALB>=thLB)
+  # keep these species
+  keepLB = t_met_corr_filt_clades_LB[wLB,]
+  # what are these kept species
+  rownames(keepLB)
+  #which species have we kept
+  keptListLB[[as.character(thLB)]] = rownames(keepLB)
+  keptList1LB = lapply (keptListLB, FUN = length)
+  Number_of_clades_kept_LB = as.numeric(keptList1LB)
+}
+
+
+# plot graph of threshold value against number of species kept to identiy best threshold value to use
+plot(x=Number_LB_samples_clade_present, y=Number_of_clades_kept_LB)
+
+# species has to be present in at least 5% of LB samples = 15/292 LB samples
+wLB15 = which(nNALB>=15)
+# keep these species
+keepLB15 = t_met_corr_filt_clades_LB[wLB15,]
+# what are these kept species
+rownames(keepLB15)
+clades_LB5p = rownames(keepLB15)
+
+#############
+# Combine lists of species present in at least 5% of samples at each anatomical site ie 10/197 thigh samples, 6/116 UB samples, 15/292 LB samples
+Dup_clades_5p_anat_loc = c(clades_Th5p, clades_UB5p, clades_LB5p)
+length (clades_Th5p)
+length (clades_UB5p)
+length (clades_LB5p)
+length (Dup_clades_5p_anat_loc)
+clades_5p_anat_loc = unique(Dup_clades_5p_anat_loc)
+length(clades_5p_anat_loc)
+#What are these species
+clades_5p_anat_loc
+#••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••••
+##############################################################
+##############################################################
+
+#••••••••••••••••••••••••••••
+# 3. Clades present in a minimum  proportion of samples within CTRL/ AD/ PSO (lesional / non-lesional) skin
+# CTRL
+#Identify which samples are CTRL samples
+wCTRL = grep("CTRL", clin_seq_pt_metadata[,"clinical_group"])
+CTRLSamples = clin_seq_pt_metadata[wCTRL,"scilifeID"]
+class (CTRLSamples)
+CCTRL = as.character(CTRLSamples)
+length(CTRLSamples)
+
+# Subset these CTRL samples from Species abundances DF
+t_met_corr_filt_clades_ctrl = t_met_corr_filt_clades [,c( "P1411_1001", "P1411_1002", "P1411_1007", "P1411_1008", "P1411_1013", "P1411_1014", "P1411_1019", "P1411_1020", "P1411_1023", "P1411_1024", "P1411_1025", "P1411_1026",
+                          "P1411_1031", "P1411_1032", "P1411_1035", "P1411_1036", "P1411_1038", "P1411_1039", "P1411_1044", "P1411_1045", "P1411_1048", "P1411_1049", "P1411_1050", "P1411_1051",
+                          "P1411_1056", "P1411_1057", "P1411_1060", "P1411_1061", "P1411_1069", "P1411_1070", "P1411_1075", "P1411_1076", "P1411_1081", "P1411_1082", "P1411_1085", "P1411_1087",
+                          "P1411_1098", "P1411_1099", "P1411_1106", "P1411_1107", "P1709_1007", "P1709_1008", "P1709_1085", "P1709_1086", "P1709_1087", "P1709_1088", "P1709_1089", "P1709_1090",
+                          "P1709_1091", "P1709_1092", "P1709_1093", "P1709_1094", "P1709_1095", "P1709_1096", "P1709_1097", "P1709_1098", "P1709_1099", "P1709_1100", "P1709_1101", "P1709_1102",
+                          "P1709_1103", "P1709_1104", "P1709_1105", "P1761_1001", "P1761_1002", "P1761_1007", "P1761_1008", "P1761_1025", "P1761_1026", "P1761_1031", "P1761_1032", "P1761_1035",
+                          "P1761_1036", "P1761_1038", "P1761_1039", "P1761_1044", "P1761_1045", "P1761_1050", "P1761_1051", "P1761_1056", "P1761_1057", "P1761_1060", "P1761_1061", "P1761_1069",
+                          "P1761_1070", "P1761_1075", "P1761_1076", "P1761_1081", "P1761_1084", "P1761_1086", "P1761_1097", "P1761_1098", "P1761_1105", "P1761_1106", "P1821_1017","P1821_1073", 
+                          "P1821_1074","P1821_1075", "P1821_1078", "P1821_1079", "P1821_1080", "P1821_1081", "P1821_1082", "P1821_1083", "P1821_1084", "P1821_1085", "P1821_1086",
+                          "P1821_1087", "P1821_1088", "P1821_1089", "P1821_1090", "P1821_1091", "P1821_1092", "P1821_1097", "P1821_1098", "P1821_1103", "P1821_1104", "P1896_1030", "P1896_1031",
+                          "P1896_1032", "P1896_1040", "P1896_1042", "P1896_1044", "P1896_1053", "P1896_1054", "P1896_1055", "P1896_1056", "P1896_1057",
+                          "P1896_1058", "P1896_1059", "P1896_1060", "P1896_1062", "P1896_1063", "P1896_1064", "P1896_1065", "P1896_1067", "P1896_1068", "P1896_1069", "P1896_1072", "P1896_1073",
+                          "P1896_1074", "P1896_1076", "P1896_1077", "P1896_1078", "P1896_1079", "P1896_1080", "P1896_1081", "P1896_1082", "P1896_1084", "P1896_1085", "P1896_1090", "P1896_1091",
+                          "P1896_1096", "P1896_1097", "P1896_1102", "P1896_1103", "P1900_1001", "P1900_1003", "P1900_1004", "P1900_1005", "P1900_1010", "P1900_1013", "P1900_1014", "P1900_1015",
+                          "P1900_1016", "P1900_1017", "P1900_1018", "P1900_1019", "P1900_1020", "P1900_1021", "P1900_1022", "P1900_1024", "P1900_1060", "P1900_1079", "P1900_1080", "P1900_1082",
+                          "P1900_1085", "P1900_1086", "P1900_1087", "P1900_1088", "P1900_1089", "P1900_1090", "P1900_1091", "P1900_1092", "P1900_1093", "P1900_1096", "P1900_1097", "P1900_1102",
+                          "P1900_1103", "P2029_1018", "P2029_1019", "P2029_1020", "P2029_1022", "P2029_1024", "P2029_1026", "P2029_1029", "P2029_1031", "P2029_1033", "P2029_1060", "P2029_1063",
+                          "P2029_1076", "P2029_1077", "P752_101"  , "P752_102" ,  "P752_107",   "P752_108" ,  "P752_113",   "P752_114" )]
+dim(t_met_corr_filt_clades_ctrl)
+t_met_corr_filt_clades_ctrl[t_met_corr_filt_clades_ctrl == 0] <- NA
+# identify nonNAs (ie abundance of specific species in specific sample is greater 0 = species is present)
+vNACTRL = !is.na(t_met_corr_filt_clades_ctrl)
+#calculate number of nonNAs in each row ie number of samples when species is present
+nNACTRL = rowSums(vNACTRL)
+# identify how many species are retained when we apply a threshold (th) of minimum number of samples in which species must be present (minimum threshold of nNAT)
+keptListCTRL=list()
+Number_CTRL_samples_clade_present = seq(from=1, to= 207, length.out = 207)
+
+for(thCTRL in Number_CTRL_samples_clade_present){
+  wCTRL = which(nNACTRL>=thCTRL)
+  # keep these species
+  keepCTRL = t_met_corr_filt_clades_ctrl[wCTRL,]
+  # what are these kept species
+  rownames(keepCTRL)
+  #which species have we kept
+  keptListCTRL[[as.character(thCTRL)]] = rownames(keepCTRL)
+  keptList1CTRL = lapply (keptListCTRL, FUN = length)
+  Number_of_clades_kept_CTRL = as.numeric(keptList1CTRL)
+}
+
+# plot graph of threshold value against number of species kept to identiy best threshold value to use
+plot(x=Number_CTRL_samples_clade_present, y=Number_of_clades_kept_CTRL)
+
+# Species has to be present in at least 5% of CTRL samples = 11/212 CTRL samples
+wCTRL5p = which(nNACTRL>=11)
+# keep these species
+keepCTRL5p = t_met_corr_filt_clades_ctrl[wCTRL5p,]
+# what are these kept species
+rownames(keepCTRL5p)
+clades_CTRL5p = rownames(keepCTRL5p)
+
+# AD non-lesional
+
+#Identify which samples are AD non-les samples
+wAD = grep("AD", clin_seq_pt_metadata[,"clinical_group"])
+AD1 = clin_seq_pt_metadata[wAD,]
+wADnonles = grep("NON_LES", AD1[,"lesional"])
+ADnonlesSamples = AD1 [wADnonles,"scilifeID"]
+CADNL = as.character(ADnonlesSamples)
+length(CADNL)
+# Subset AD non-les samples from Species abundances DF
+t_met_corr_filt_clades_adnl = t_met_corr_filt_clades [,c( "P1411_1006", "P1411_1012", "P1411_1018", "P1411_1030", "P1411_1043", "P1411_1055", "P1411_1064", "P1411_1068", "P1411_1074",
+                       "P1411_1080", "P1411_1089", "P1411_1093", "P1411_1095", "P1411_1101", "P1411_1105", "P1709_1006", "P1709_1012", "P1709_1051",
+                       "P1709_1053", "P1709_1055", "P1709_1057", "P1709_1059", "P1709_1061", "P1709_1063", "P1709_1065", "P1709_1067", "P1709_1069",
+                       "P1709_1071", "P1709_1074", "P1709_1076", "P1709_1078", "P1709_1082", "P1709_1084", "P1761_1006", "P1761_1018", "P1761_1024",
+                       "P1761_1030", "P1761_1043", "P1761_1049", "P1761_1055", "P1761_1064", "P1761_1068", "P1761_1074", "P1761_1080", "P1761_1092",
+                       "P1761_1094", "P1761_1104", "P1821_1036", "P1821_1038", "P1821_1040", "P1821_1042", "P1821_1046", "P1821_1049", "P1821_1051",
+                       "P1821_1053", "P1821_1055", "P1821_1057", "P1821_1059", "P1821_1061", "P1821_1063", "P1821_1065", "P1821_1067", "P1821_1069",
+                       "P1821_1071", "P1821_1095", "P1821_1102", "P1821_1107", "P1896_1025", "P1896_1027", "P1896_1029", "P1896_1033", "P1896_1035",
+                       "P1896_1037", "P1896_1039", "P1896_1041", "P1896_1043", "P1896_1045", "P1896_1046", "P1896_1071", "P1896_1089", "P1896_1095",
+                       "P1896_1101", "P1900_1101", "P1900_1107", "P2029_1071", "P2029_1075", "P752_106" ,  "P752_112" ,  "P752_118")   ]
+dim(t_met_corr_filt_clades_adnl)
+t_met_corr_filt_clades_adnl[t_met_corr_filt_clades_adnl == 0] <- NA
+# identify nonNAs (ie abundance of specific Species in specific sample is greater 0 = Species is present)
+vNAADNL = !is.na(t_met_corr_filt_clades_adnl)
+#calculate number of nonNAs in each row ie number of samples when Species is present
+nNAADNL = rowSums(vNAADNL)
+# identify how many Species are retained when we apply a threshold (th) of minimum number of samples in which Species must be present (minimum threshold of nNAT)
+keptListADNL=list()
+Number_ADNL_samples_clade_present = seq(from=1, to= 87, length.out = 87)
+
+for(thADNL in Number_ADNL_samples_clade_present){
+  wADNL = which(nNAADNL>=thADNL)
+  # keep these species
+  keepADNL = t_met_corr_filt_clades_adnl[wADNL,]
+  # what are these kept species
+  rownames(keepADNL)
+  #which species have we kept
+  keptListADNL[[as.character(thADNL)]] = rownames(keepADNL)
+  keptList1ADNL = lapply (keptListADNL, FUN = length)
+  Number_of_clades_kept_ADNL = as.numeric(keptList1ADNL)
+}
+# plot graph of threshold value against number of species kept to identiy best threshold value to use
+plot(x=Number_ADNL_samples_clade_present, y=Number_of_clades_kept_ADNL)
+
+# Species has to be present in at least 5% of AD non-les samples = 4/89 ADNL samples
+wADNL5p = which(nNAADNL>=4)
+# keep these species
+keepADNL5p = t_met_corr_filt_clades_adnl[wADNL5p,]
+# what are these kept species
+rownames(keepADNL5p)
+clades_ADNL5p = rownames(keepADNL5p)
+
+## lesional AD
+
+#Identify which samples are AD les samples
+wADles = grep("^L", AD1[,"lesional"])
+ADlesSamples = AD1 [wADles,"scilifeID"]
+CADL = as.character(ADlesSamples)
+class (CADL)
+length(CADL)
+# Subset AD les samples from Species abundances DF
+t_met_corr_filt_clades_adl = t_met_corr_filt_clades [,c( "P1411_1005", "P1411_1011", "P1411_1017", "P1411_1029", "P1411_1042", "P1411_1054", "P1411_1063", "P1411_1067", "P1411_1073", "P1411_1079", "P1411_1088",
+                         "P1411_1092", "P1411_1094", "P1411_1100","P1709_1005", "P1709_1011", "P1709_1050", "P1709_1052", "P1709_1054", "P1709_1056", "P1709_1058",
+                         "P1709_1060", "P1709_1062", "P1709_1064", "P1709_1066", "P1709_1068", "P1709_1070", "P1709_1073", "P1709_1075", "P1709_1077", "P1709_1081", "P1709_1083",
+                         "P1761_1005", "P1761_1011", "P1761_1017", "P1761_1023", "P1761_1029", "P1761_1042", "P1761_1048", "P1761_1054", "P1761_1063", "P1761_1067", "P1761_1073",
+                         "P1761_1079", "P1761_1091", "P1761_1093", "P1761_1103", "P1821_1035", "P1821_1037", "P1821_1039", "P1821_1041", "P1821_1045", "P1821_1047", "P1821_1050",
+                         "P1821_1052", "P1821_1054", "P1821_1056", "P1821_1060", "P1821_1062", "P1821_1064", "P1821_1066", "P1821_1068", "P1821_1070", "P1821_1094",
+                         "P1821_1096", "P1821_1101", "P1896_1026", "P1896_1028", "P1896_1034", "P1896_1036", "P1896_1038", "P1896_1048", "P1896_1088", "P1896_1094",
+                         "P1896_1100", "P1900_1100", "P1900_1106", "P2029_1064", "P2029_1065", "P2029_1066", "P2029_1067", "P2029_1070", "P2029_1074", "P752_105" ,  "P752_111"  ,
+                         "P752_117" )]
+dim(t_met_corr_filt_clades_adl)
+t_met_corr_filt_clades_adl[t_met_corr_filt_clades_adl == 0] <- NA
+# identify nonNAs (ie abundance of specific Species in specific sample is greater 0 = Species is present)
+vNAADL = !is.na(t_met_corr_filt_clades_adl)
+#calculate number of nonNAs in each row ie number of samples when Species is present
+nNAADL = rowSums(vNAADL)
+# identify how many Species are retained when we apply a threshold (th) of minimum number of samples in which Species must be present (minimum threshold of nNAT)
+keptListADL=list()
+Number_ADL_samples_clade_present = seq(from=1, to= 74, length.out = 74)
+
+for(thADL in Number_ADL_samples_clade_present){
+  wADL = which(nNAADL>=thADL)
+  # keep these species
+  keepADL = t_met_corr_filt_clades_adl[wADL,]
+  # what are these kept species
+  rownames(keepADL)
+  #which species have we kept
+  keptListADL[[as.character(thADL)]] = rownames(keepADL)
+  keptList1ADL = lapply (keptListADL, FUN = length)
+  Number_of_clades_kept_ADL = as.numeric(keptList1ADL)
+}
+# plot graph of threshold value against number of species kept to identiy best threshold value to use
+plot(x=Number_ADL_samples_clade_present, y=Number_of_clades_kept_ADL)
+
+# Species has to be present in at least 5% of AD les samples = 4/89 ADL samples
+wADL5p = which(nNAADL>=4)
+# keep these species
+keepADL5p = t_met_corr_filt_clades_adl[wADL5p,]
+# what are these kept species
+rownames(keepADL5p)
+clades_ADL5p = rownames(keepADL5p)
+
+#••••••••••••••••••••••••••••
+## non-lesional PSO
+#Identify which samples are PSO non-les samples
+wPSO = grep("PSO", clin_seq_pt_metadata[,"clinical_group"])
+PSO1 = clin_seq_pt_metadata[wPSO,]
+wPSOnonles = grep("NON_LES", PSO1[,"lesional"])
+PSOnonlesSamples = PSO1 [wPSOnonles,"scilifeID"]
+CPSONL = as.character(PSOnonlesSamples)
+length (CPSONL)
+
+# Subset PSO non-les samples from Species abundances DF
+t_met_corr_filt_clades_psonl = t_met_corr_filt_clades [,c( "P1411_1004", "P1411_1010", "P1411_1016", "P1411_1022", "P1411_1028", "P1411_1034", "P1411_1041", "P1411_1047", "P1411_1053", "P1411_1059"
+                           ,"P1411_1066", "P1411_1072", "P1411_1078", "P1411_1084", "P1411_1091", "P1411_1103", "P1709_1004", "P1709_1010", "P1709_1016", "P1709_1018"
+                           ,"P1709_1020", "P1709_1022", "P1709_1024", "P1709_1026", "P1709_1028", "P1709_1030", "P1709_1032", "P1709_1034", "P1709_1036", "P1709_1039"
+                           ,"P1709_1041", "P1709_1043", "P1709_1045", "P1709_1047", "P1709_1049", "P1761_1004", "P1761_1010", "P1761_1016", "P1761_1022", "P1761_1028"
+                           ,"P1761_1034", "P1761_1041", "P1761_1047", "P1761_1053", "P1761_1059", "P1761_1066", "P1761_1072", "P1761_1078", "P1761_1083", "P1761_1090"
+                           ,"P1761_1096", "P1761_1102", "P1821_1002", "P1821_1004", "P1821_1006", "P1821_1008", "P1821_1009", "P1821_1010", "P1821_1011", "P1821_1012"
+                           ,"P1821_1015", "P1821_1018", "P1821_1020", "P1821_1022", "P1821_1024", "P1821_1026", "P1821_1028", "P1821_1030", "P1821_1032", "P1821_1034"
+                           ,"P1821_1106", "P1896_1017", "P1896_1021", "P1896_1023", "P1896_1087", "P1896_1093", "P1896_1099", "P1896_1105", "P1900_1007", "P1900_1009"
+                           ,"P1900_1012", "P1900_1026", "P1900_1028", "P1900_1030", "P1900_1031", "P1900_1032", "P1900_1034", "P1900_1035", "P1900_1036", "P1900_1039"
+                           ,"P1900_1041", "P1900_1044", "P1900_1045", "P1900_1046", "P1900_1049", "P1900_1051", "P1900_1054", "P1900_1055", "P1900_1057", "P1900_1059"
+                           ,"P1900_1062", "P1900_1068", "P1900_1069", "P1900_1070", "P1900_1071", "P1900_1072", "P1900_1074", "P1900_1075", "P1900_1078"
+                           ,"P1900_1084", "P1900_1095", "P1900_1099", "P1900_1105", "P2029_1023", "P2029_1025", "P2029_1027","P752_110", "P2029_1058", "P2029_1069", "P752_104"
+                            , "P752_116" )]
+dim(t_met_corr_filt_clades_psonl)
+t_met_corr_filt_clades_psonl[t_met_corr_filt_clades_psonl == 0] <- NA
+# identify nonNAs (ie abundance of specific Species in specific sample is greater 0 = Species is present)
+vNAPSONL = !is.na(t_met_corr_filt_clades_psonl)
+#calculate number of nonNAs in each row ie number of samples when Species is present
+nNAPSONL = rowSums(vNAPSONL)
+# identify how many Species are retained when we apply a threshold (th) of minimum number of samples in which Species must be present (minimum threshold of nNAT)
+keptListPSONL=list()
+Number_PSONL_samples_clade_present = seq(from=1, to= 121, length.out = 121)
+
+for(thPSONL in Number_PSONL_samples_clade_present){
+  wPSONL = which(nNAPSONL>=thPSONL)
+  # keep these species
+  keepPSONL = t_met_corr_filt_clades_psonl[wPSONL,]
+  # what are these kept species
+  rownames(keepPSONL)
+  #which species have we kept
+  keptListPSONL[[as.character(thPSONL)]] = rownames(keepPSONL)
+  keptList1PSONL = lapply (keptListPSONL, FUN = length)
+  Number_of_clades_kept_PSONL = as.numeric(keptList1PSONL)
+}
+# plot graph of threshold value against number of species kept to identiy best threshold value to use
+plot(x=Number_PSONL_samples_clade_present, y=Number_of_clades_kept_PSONL)
+
+# Species has to be present in at least 5% of AD non-les samples = 6/122 ADNL samples
+wPSONL5p = which(nNAPSONL>=6)
+# keep these species
+keepPSONL5p = t_met_corr_filt_clades_psonl[wPSONL5p,]
+# what are these kept species
+rownames(keepPSONL5p)
+clades_PSONL5p = rownames(keepPSONL5p)
+
+
+## lesional PSO
+#Identify which samples are PSO les samples
+wPSOles = grep("^L", PSO1[,"lesional"])
+PSOlesSamples = PSO1 [wPSOles,"scilifeID"]
+CPSOL = as.character(PSOlesSamples)
+class (CPSOL)
+length(CPSOL)
+
+# Subset PSO les samples from Species abundances DF
+t_met_corr_filt_clades_psol = t_met_corr_filt_clades [,c("P1411_1003", "P1411_1009", "P1411_1021", "P1411_1027", "P1411_1033", "P1411_1040", "P1411_1046", "P1411_1052", "P1411_1058", "P1411_1065", "P1411_1071", "P1411_1077", "P1411_1083", "P1411_1090",
+                           "P1411_1102", "P1709_1003", "P1709_1009", "P1709_1015", "P1709_1017", "P1709_1019", "P1709_1021", "P1709_1023", "P1709_1025", "P1709_1027", "P1709_1029", "P1709_1031", "P1709_1033", "P1709_1035",
+                          "P1709_1038", "P1709_1040", "P1709_1042", "P1709_1044", "P1709_1046", "P1709_1048", "P1761_1003", "P1761_1009", "P1761_1015", "P1761_1021", "P1761_1027", "P1761_1033", "P1761_1040", "P1761_1046",
+                          "P1761_1052", "P1761_1058", "P1761_1065", "P1761_1071", "P1761_1077", "P1761_1082", "P1761_1089", "P1761_1095", "P1761_1101", "P1821_1001", "P1821_1003", "P1821_1005", "P1821_1007", "P1821_1013",
+                          "P1821_1016", "P1821_1019", "P1821_1021", "P1821_1023", "P1821_1025", "P1821_1027", "P1821_1031", "P1821_1033", "P1821_1093", "P1821_1105", "P1896_1001", "P1896_1002",
+                          "P1896_1003", "P1896_1005", "P1896_1006", "P1896_1007", "P1896_1010", "P1896_1011", "P1896_1012", "P1896_1013", "P1896_1014", "P1896_1015", "P1896_1016", "P1896_1018",
+                         "P1896_1020", "P1896_1086", "P1896_1092", "P1896_1098", "P1896_1104", "P1900_1006", "P1900_1008", "P1900_1011", "P1900_1025", "P1900_1027", "P1900_1029", "P1900_1033", "P1900_1037", "P1900_1038",
+                          "P1900_1040", "P1900_1042", "P1900_1043", "P1900_1048", "P1900_1050", "P1900_1052", "P1900_1056", "P1900_1058", "P1900_1065", "P1900_1067", "P1900_1073", "P1900_1076", "P1900_1077", "P1900_1083",
+                          "P1900_1094", "P1900_1098", "P1900_1104", "P2029_1021", "P2029_1030", "P2029_1032", "P2029_1056", "P2029_1057", "P2029_1059", "P2029_1068", "P752_103", "P752_109", "P752_115")]
+dim(t_met_corr_filt_clades_psol)
+t_met_corr_filt_clades_psol[t_met_corr_filt_clades_psol == 0] <- NA
+# identify nonNAs (ie abundance of specific Species in specific sample is greater 0 = Species is present)
+vNAPSOL = !is.na(t_met_corr_filt_clades_psol)
+#calculate number of nonNAs in each row ie number of samples when Species is present
+nNAPSOL = rowSums(vNAPSOL)
+# identify how many Species are retained when we apply a threshold (th) of minimum number of samples in which Species must be present (minimum threshold of nNAT)
+keptListPSOL=list()
+Number_PSOL_samples_clade_present = seq(from=1, to= 115, length.out = 115)
+
+for(thPSOL in Number_PSOL_samples_clade_present){
+  wPSOL = which(nNAPSOL>=thPSOL)
+  # keep these species
+  keepPSOL = t_met_corr_filt_clades_psol[wPSOL,]
+  # what are these kept species
+  rownames(keepPSOL)
+  #which species have we kept
+  keptListPSOL[[as.character(thPSOL)]] = rownames(keepPSOL)
+  keptList1PSOL = lapply (keptListPSOL, FUN = length)
+  Number_of_clades_kept_PSOL = as.numeric(keptList1PSOL)
+}
+# plot graph of threshold value against number of species kept to identiy best threshold value to use
+plot(x=Number_PSOL_samples_clade_present, y=Number_of_clades_kept_PSOL)
+
+# Species has to be present in at least 5% of PSO les samples = 6/125 PSOL samples
+wPSOL5p = which(nNAPSOL>=6)
+# keep these species
+keepPSOL5p = t_met_corr_filt_clades_psol[wPSOL5p,]
+# what are these kept species
+rownames(keepPSOL5p)
+clades_PSOL5p = rownames(keepPSOL5p)
+#••••••••••••••••••••••••••••
+# Combine clade lists present in at least 5% of lesional / non-lesional skin of each clinical group (AD, PSO, CTRL)
+Dup_clades_5p_CG = c(clades_CTRL5p, clades_ADNL5p, clades_ADL5p, clades_PSONL5p, clades_PSOL5p) 
+length(clades_CTRL5p)
+length(clades_ADNL5p)
+length(clades_ADL5p)
+length(clades_PSONL5p)
+length(clades_PSOL5p)
+length(Dup_clades_5p_CG)
+clades_5p_CG = unique(Dup_clades_5p_CG)
+clades_5p_CG
+
+# Combine clade lists present in at least 5p of anatomical locations and clinical groups
+Dup_clades_5p = c(clades_5p_anat_loc, clades_5p_CG) 
+length(clades_5p_anat_loc)
+length(clades_5p_CG)
+length(Dup_clades_5p)
+met_corr_sample_filt_clades = unique(Dup_clades_5p)
+met_corr_sample_filt_clades
+length(met_corr_sample_filt_clades)
+# how many clades have been excluded from corr_filtered list?
+dim(met_corr_filt_clades)
+length(colnames(met_corr_filt_clades))-(length(met_corr_sample_filt_clades))
+## what are the clades that have been excluded from the corr_filtered list
+excluded_from_met_corr_filt = setdiff((colnames(met_corr_filt_clades)), (met_corr_sample_filt_clades))
+head(excluded_from_met_corr_filt)
+#***********************************
+
+#subset the microbes to be retained from corr_filt_clades
+met_corr_sample_filt_clades_abund = met_unfilt_clades [,c(met_corr_sample_filt_clades)]
+dim(met_corr_sample_filt_clades_abund)
+head(met_corr_sample_filt_clades_abund)
+
+
+
+#•••••••••••••••••••••••••••
+
+# save reduced abundance matrix (met_corr_sample_filt_clades_abund)
+save(met_corr_sample_filt_clades_abund, file = "/Users/helenalexander/Documents/MAARS/data/metaphlan/analysis/data-filtering/20160304met_corr_sample_filt_clades_abund.Rdata")
+
+write.csv(x = met_corr_sample_filt_clades_abund, file = "/Users/helenalexander/Documents/MAARS/data/metaphlan/analysis/data-filtering/20160304met_corr_sample_filt_clades_abund.csv", quote=FALSE, row.names
+          = TRUE)
+
+
+
