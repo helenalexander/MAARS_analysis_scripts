@@ -80,7 +80,7 @@ colnames(metadata)[grep("Gender", colnames(metadata))] <- "sex"
 colnames(metadata)[grep("CUSTOM_Age", colnames(metadata))] <- "age"
 
 # Clarify that MAARS_identifier refers to a patient specific id
-colnames(metadata)[grep("MAARS_identifier", colnames(metadata))] <- "maars_patient_id"
+colnames(metadata)[grep("MAARS_identifier", colnames(metadata))] <- "maars_subject_id"
 
 # Standardize ScilifeID to scilife_id. Probably better to change to sequenced_sample_id or something
 colnames(metadata)[grep("ScilifeID", colnames(metadata))] <- "scilife_id"
@@ -94,8 +94,8 @@ colnames(metadata)[grep("MSequenced", colnames(metadata))] <- "million_reads_seq
 # Change "Fam._hist._Atopic_dermatitis" to match "Family_History_of_Psoriasis"
 colnames(metadata)[grep("Fam._hist._Atopic_dermatitis", colnames(metadata))] <- "Family_History_of_Atopic_dermatitis"
 
-#Infer maars_patient_id for unannotated samples (For later joining with patient metadata)
-metadata$maars_patient_id[is.na(metadata$maars_patient_id) & !metadata$is_ntc  ] <- sapply(metadata$MAARS_sample_id[is.na(metadata$maars_patient_id) & !metadata$is_ntc ],
+#Infer maars_subject_id for unannotated samples (For later joining with patient metadata)
+metadata$maars_subject_id[is.na(metadata$maars_subject_id) & !metadata$is_ntc  ] <- sapply(metadata$MAARS_sample_id[is.na(metadata$maars_subject_id) & !metadata$is_ntc ],
                                                                                             function(sample_id) substring(sample_id,1,nchar(sample_id)-3))
 #************** Anatomical location wrangling
 
@@ -160,27 +160,21 @@ rm(ntc_type,ntc_institution)
 rm(col,factor_cols)
 
 #******************************************************
-### Deal with duplicated samples
+### Annotate with duplicated maars_sample_id
 #******************************************************
+#Add metadata regarding 
+resequenced_samples <- read.csv("input_files/160405_resequenced_samples_status.csv", stringsAsFactors=FALSE)
 
-# # {is it duplicated sequencing or mislabels?}
-# duplicated_maars_sample_id <- (megadata.filt %>% filter(!is_ntc) %>% filter(duplicated(maars_sample_id)) %>% select(maars_sample_id))$maars_sample_id
-# 
-# duplicated.df <- megadata.filt %>% filter(maars_sample_id %in% duplicated_maars_sample_id) %>% select(batch_id,scilife_id,maars_sample_id,million_reads_sequenced) %>% arrange(maars_sample_id,batch_id)
-# write.csv(duplicated.df,file = "duplicated_samples_maars_shotgun.csv")
-# 
-# str(megadata.filt)
-# 
-# #Verify how many patients have more or less than 2 sampless
-# duplicated_patient_ids <- (megadata.filt %>% filter(!is_ntc) %>% count(maars_patient_id) %>% filter( n > 2) %>% arrange(desc(n)))$maars_patient_id
-# suspicious_patient_ids <- (megadata.filt %>% filter(!is_ntc) %>% count(maars_patient_id) %>% filter( n < 2) %>% arrange(desc(n)))$maars_patient_id
-# 
-# #List Patients with more than 2 samples
-# megadata.filt %>% filter(maars_patient_id %in% duplicated_patient_ids) %>% 
-#   select(batch_id,scilife_id,maars_patient_id,maars_sample_id) %>% 
-#   arrange(maars_patient_id)
-# 
-# ###NOTE!
-# #Some of the maars_sample_id end in _12, should we filter them out?
+metadata <- merge(metadata,resequenced_samples,by="maars_sample_id",all.x=TRUE)
+metadata[is.na(metadata$resequenced),"resequenced" ] <- FALSE
 
-
+#******************************************************
+# Annotate "unpaired" samples. 
+# Mark samples for which only one sample exists for a
+# given volunteer. (Each volunteer was sampled twice)
+# Patients: lesional & non-lesional
+#******************************************************
+unpaired_samples <- (metadata %>% filter(!is_ntc) %>% count(maars_subject_id) %>% filter( n  == 1 ))$maars_subject_id
+metadata$unpaired_sample <- metadata$maars_subject_id %in% unpaired_samples
+metadata[metadata$is_ntc,"unpaired_sample"] <- NA
+rm(unpaired_samples)

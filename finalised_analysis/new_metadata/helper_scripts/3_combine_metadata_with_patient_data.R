@@ -158,7 +158,7 @@ colnames(patient_data) <- tolower(colnames(patient_data))
 #*******************************************************
 ## integrate patient and sample level information ###
 megadata = merge(x=metadata, y=patient_data,
-                 by.x="maars_patient_id",
+                 by.x="maars_subject_id",
                  by.y="identification.maars.identifier",
                  all.x=TRUE
 )

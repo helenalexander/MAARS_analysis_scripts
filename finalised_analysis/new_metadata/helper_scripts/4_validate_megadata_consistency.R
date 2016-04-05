@@ -1,4 +1,5 @@
 megadata.nonexcluded <- megadata %>% filter(is_ntc | (!excluded & !excluded_from_sample_metadata))
+print("Verify consistency in non-excluded data")
 
 #Non-negative controls & non-excluded samples annotated in the first step should also have patient level annotation
 print("Check if non-negative controls have patient_metadata annotation")
