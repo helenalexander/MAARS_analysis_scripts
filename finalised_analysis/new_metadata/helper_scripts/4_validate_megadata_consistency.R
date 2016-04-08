@@ -1,5 +1,4 @@
-megadata.nonexcluded <- megadata %>% filter(is_ntc | (!excluded & !excluded_from_sample_metadata))
-print("Verify consistency in non-excluded data")
+megadata.nonexcluded <- megadata %>% filter(is_ntc | (in_sample_metadata & !excluded ))
 
 #Non-negative controls & non-excluded samples annotated in the first step should also have patient level annotation
 print("Check if non-negative controls have patient_metadata annotation")
@@ -30,11 +29,23 @@ rm(tmp_factor)
 print("OK")
 
 
-print("List of samples excluded from sample metadata which are NOT marked as excluded in patient metadata")
+print("Are there samples not annotated in the sample metadata nor in the patient metadata")
+tmp.df <-megadata %>% filter(!is_ntc) %>% filter(!in_sample_metadata &  !in_patient_metadata) %>% select(scilife_id,maars_sample_id)
+if(nrow(tmp.df) > 0){
+  warning("There are samples with no known metadata")
+  print(tmp.df)
+}else{
+  print("OK. No unannotated samples")
+}
+
+
+print("List of samples not present in the sample metadata which are NOT marked as excluded in patient metadata")
 # Most samples with not sample metadata are marked as excluded volunteers in patient metadata, 
 # except for 4 samples from three patients (1,1,2) which were omitted from the sample_metadata table, 
 # but have no indication of having an excluded status
-megadata %>% filter(!is_ntc) %>% filter(excluded_from_sample_metadata & (!is.na(patient_clinical_group) )) %>% filter(!excluded) %>% select(scilife_id,maars_sample_id) %>% print
+megadata %>% filter(!is_ntc) %>% 
+             filter(!in_sample_metadata & in_patient_metadata ) %>% 
+             filter(!excluded) %>% select(scilife_id,maars_sample_id,samples_per_subject,patient_clinical_group) %>% print
 
 
 #*******************************************************************************
@@ -83,6 +94,7 @@ for( col in grep("(hanifin)|(scorad)|(LOCAL)|(SCORAD)",colnames(megadata),value=
 
 rm(megadata.nonexcluded)
 rm(ntc.count,ad.count,pso.count,ctrl.count)
+
 #*******************************************************************************
 #Verify list of samples in the Rosalind cluster corresponds to the samples in megadata
 #*******************************************************************************

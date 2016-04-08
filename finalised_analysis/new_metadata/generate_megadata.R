@@ -2,7 +2,7 @@ library(ggplot2)
 library(stringr)
 library(dplyr)
 
-setwd("~/workspace/MAARS_analysis_scripts/finalised_analysis/new_metadata")
+#setwd("~/workspace/MAARS_analysis_scripts/finalised_analysis/new_metadata")
 
 rm(list=ls())
 #****************************************************************
@@ -50,7 +50,7 @@ megadata <- megadata[,-grep("clinical.assessment.global.assessment.score", colna
 megadata <- megadata[,-grep("sampled_lesional_skinsite", colnames(megadata))]
 
 #Discard samples that are marked as excluded in patient metadata or excluded from the sample metadata file
-megadata.filt <- megadata %>% filter(is_ntc | (!excluded & !excluded_from_sample_metadata))
+megadata.filt <- megadata %>% filter(is_ntc | (in_sample_metadata & !excluded ))
 
 for(col in colnames(megadata.filt)){
   print(col)
@@ -64,5 +64,5 @@ for(col in colnames(megadata.filt)){
 dim(megadata)
 
 dir.create("out/")
-save(megadata,megadata.filt, file = "out/160405_megadata.Rdata")
-write.csv(megadata, file = "out/160405_megadata.csv", quote=FALSE, row.names = FALSE,na="")
+save(megadata,megadata.filt, file = "out/160408_megadata.Rdata")
+write.csv(megadata, file = "out/160408_megadata.csv", quote=FALSE, row.names = FALSE,na="")

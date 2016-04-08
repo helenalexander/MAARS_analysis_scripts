@@ -70,7 +70,7 @@ colnames(metadata)
 #*****************************************************************
 
 #**** Define a variable for unannotated data
-metadata["excluded_from_sample_metadata"] <- is.na(metadata$clinical_group) & ( !metadata$is_ntc )
+metadata["in_sample_metadata"] <- ! is.na(metadata$clinical_group)
 
 #******** Variable renaming ********************
 # it's not gender, it's sex.
@@ -169,12 +169,10 @@ metadata <- merge(metadata,resequenced_samples,by="maars_sample_id",all.x=TRUE)
 metadata[is.na(metadata$resequenced),"resequenced" ] <- FALSE
 
 #******************************************************
-# Annotate "unpaired" samples. 
-# Mark samples for which only one sample exists for a
-# given volunteer. (Each volunteer was sampled twice)
+# Annotate how many samples were collected per subject 
 # Patients: lesional & non-lesional
 #******************************************************
-unpaired_samples <- (metadata %>% filter(!is_ntc) %>% count(maars_subject_id) %>% filter( n  == 1 ))$maars_subject_id
-metadata$unpaired_sample <- metadata$maars_subject_id %in% unpaired_samples
-metadata[metadata$is_ntc,"unpaired_sample"] <- NA
-rm(unpaired_samples)
+samples_per_subject <- metadata %>% filter(!is_ntc) %>% count(maars_subject_id)
+colnames(samples_per_subject) <- c("maars_subject_id","samples_per_subject")
+metadata <- merge(metadata,samples_per_subject,by="maars_subject_id",all.x=TRUE)
+rm(samples_per_subject)

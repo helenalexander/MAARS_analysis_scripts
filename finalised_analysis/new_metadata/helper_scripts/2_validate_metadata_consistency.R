@@ -9,7 +9,7 @@ ntc.sample.count <- metadata %>% filter(is_ntc) %>% nrow
 
 #This variables should not have NAs
 for( col in c("maars_sample_id","batch_id","scilife_id","million_reads_sequenced",
-              "barcodeseq","filtered_reads","is_ntc","excluded_from_sample_metadata","resequenced") ){
+              "barcodeseq","filtered_reads","is_ntc","resequenced","in_sample_metadata") ){
   print(paste("Testing column",col,"for NAs"))
   stopifnot( (metadata[col] %>% is.na %>% sum) == 0 )
   print("OK")
@@ -23,8 +23,9 @@ for( col in c("lesional","sex","age","anatomical_location") ){
 }
 
 #maars_subject_id should be set for all samples except mocks
-print("Testing column maars_subject_id for completeness")
+print("Testing column maars_subject_id and samples_per_subject for completeness")
 stopifnot( (metadata$maars_subject_id %>% is.na %>% sum ) == ntc.sample.count )
+stopifnot( (metadata$samples_per_subject %>% is.na %>% sum ) == ntc.sample.count )
 print("OK")
 
 #Institute should be set for all samples except mocks
@@ -36,7 +37,7 @@ print("OK")
 print("Check all duplicated samples are correctly annotated as such")
 duplicated_maars_sample_id <- (metadata %>% filter(!is_ntc) %>% filter(duplicated(maars_sample_id)) %>% select(maars_sample_id))$maars_sample_id
 unannot.dups <- metadata %>% filter(maars_sample_id %in% duplicated_maars_sample_id) %>% filter(!resequenced ) %>%
-  select(batch_id,maars_sample_id,million_reads_sequenced,resequenced,resequencing_notes,excluded_from_sample_metadata) %>% arrange(maars_sample_id,batch_id)
+  select(batch_id,maars_sample_id,million_reads_sequenced,resequenced,resequencing_notes,in_sample_metadata) %>% arrange(maars_sample_id,batch_id)
 if(nrow(unannot.dups) == 0){
   print("OK")
 }else{

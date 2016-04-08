@@ -166,6 +166,8 @@ megadata = merge(x=metadata, y=patient_data,
 #*******************************************************
 # 4.2 Convert columns into factors / boolean columns appropriately
 #*******************************************************
+megadata$in_patient_metadata <- ! is.na(megadata$patient_clinical_group)
+
 for(col in colnames(megadata)){
   if( class(megadata[[col]]) == "character" ){
     tmpfactor <- factor(megadata[[col]] )
